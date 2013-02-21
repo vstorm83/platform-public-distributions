@@ -59,23 +59,25 @@
   <GlobalNamingResources>
 
     <!-- eXo IDM Datasource for portal -->
-    <Resource name="exo-idm_portal" auth="Container" type="javax.sql.DataSource"
+    <Resource name="exo-idm_portal" auth="Container" type="javax.sql.DataSource" factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
               initialSize="5" maxActive="20" minIdle="5" maxIdle="15" maxWait="10000"
-              validationQuery="${validationQuery}" validationQueryTimeout="5"
+              validationQuery="${validationQuery}" validationInterval="30000" logValidationErrors="true"
               testWhileIdle="true" testOnBorrow="true" testOnReturn="false"
               timeBetweenEvictionRunsMillis="30000" minEvictableIdleTimeMillis="60000"
-              removeAbandoned="true" removeAbandonedTimeout="300" logAbandoned="false"
-              poolPreparedStatements="true"
+              removeAbandoned="true" suspectTimeout="60" removeAbandonedTimeout="600" abandonWhenPercentageFull="75" logAbandoned="false"
+              jdbcInterceptors="ResetAbandonedTimer;ConnectionState;StatementFinalizer;SlowQueryReportJmx(threshold=60000)"
+              jmxEnabled="true"
               username="${username}" password="${password}" driverClassName="${driverClassName}" url="${url}"/>
 
     <!-- eXo JCR Datasource for portal -->
-    <Resource name="exo-jcr_portal" auth="Container" type="javax.sql.DataSource"
+    <Resource name="exo-jcr_portal" auth="Container" type="javax.sql.DataSource" factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
               initialSize="5" maxActive="20" minIdle="5" maxIdle="15" maxWait="10000"
-              validationQuery="${validationQuery}" validationQueryTimeout="5"
+              validationQuery="${validationQuery}" validationInterval="30000" logValidationErrors="true"
               testWhileIdle="true" testOnBorrow="true" testOnReturn="false"
               timeBetweenEvictionRunsMillis="30000" minEvictableIdleTimeMillis="60000"
-              removeAbandoned="true" removeAbandonedTimeout="300" logAbandoned="false"
-              poolPreparedStatements="true"
+              removeAbandoned="true" suspectTimeout="60" removeAbandonedTimeout="600" abandonWhenPercentageFull="75" logAbandoned="false"
+              jdbcInterceptors="ResetAbandonedTimer;ConnectionState;StatementFinalizer;SlowQueryReportJmx(threshold=60000)"
+              jmxEnabled="true"
               username="${username}" password="${password}" driverClassName="${driverClassName}" url="${url}"/>
 
   </GlobalNamingResources>
