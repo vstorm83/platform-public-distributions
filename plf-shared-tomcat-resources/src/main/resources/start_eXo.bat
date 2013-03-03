@@ -86,6 +86,14 @@ if /I "%1" EQU "-nc" (
   rem Enforce no colors in console
   SET EXO_LOGS_CONSOLE_COLORIZED=false
 ) else (
+if /I "%1" EQU "--verbose" (
+  rem Set logs level to DEBUG
+  SET EXO_LOGS_DEFAULT_LEVEL=DEBUG
+) else (
+if /I "%1" EQU "-v" (
+  rem Set logs level to DEBUG
+  SET EXO_LOGS_DEFAULT_LEVEL=DEBUG
+) else (
 if /I "%1" EQU "--help" (
   goto usage
 ) else (
@@ -95,7 +103,7 @@ if /I "%1" EQU "-h" (
   echo Invalid option !
   echo(
   goto usage
-)))))))))))
+)))))))))))))
 shift
 goto setArgs
 :doneSetArgs
@@ -112,8 +120,9 @@ goto start
   echo(
   echo   --debug            Starts with JVM Debugger (Use %%EXO_DEBUG_PORT%% to change the port. 8000 by default)
   echo   --dev              Starts with Platform developer mode
-  echo   -c, --color        Enforce using colorized logs in console. (By default colors are activated on non-windows systems)
-  echo   -nc, --nocolor     Enforce using colorized logs in console. (By default colors are activated on non-windows systems)
+  echo   -c, --color        Enforces to use colorized logs in console. (By default colors are activated on non-windows systems)
+  echo   -nc, --nocolor     Enforces to not use colorized logs in console. (By default colors are activated on non-windows systems)
+  echo   -v, --verbose      Increases logs verbosity
   echo   -b, --background   Starts as a background process. Use stop_eXo.sh to stop it. Console logs are deactivated.
   echo   -h, --help         This help message
   goto end

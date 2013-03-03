@@ -34,12 +34,13 @@ For more details see : http://logback.qos.ch/manual/configuration.html
   <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="FILE"/>
   </appender>
-  <logger name="org.exoplatform" level="INFO"/>
-  <logger name="org.gatein" level="INFO"/>
-  <logger name="org.chromattic" level="INFO"/>
-  <logger name="jcr" level="INFO"/>
-  <logger name="exo.jcr" level="INFO"/>
-  <logger name="ws" level="INFO"/>
+  <logger name="org.exoplatform" level="${env.EXO_LOGS_DEFAULT_LEVEL:INFO}"/>
+  <logger name="com.exoplatform" level="${env.EXO_LOGS_DEFAULT_LEVEL:INFO}"/>
+  <logger name="org.gatein" level="${env.EXO_LOGS_DEFAULT_LEVEL:INFO}"/>
+  <logger name="org.chromattic" level="${env.EXO_LOGS_DEFAULT_LEVEL:INFO}"/>
+  <logger name="jcr" level="${env.EXO_LOGS_DEFAULT_LEVEL:INFO}"/>
+  <logger name="exo" level="${env.EXO_LOGS_DEFAULT_LEVEL:INFO}"/>
+  <logger name="ws" level="${env.EXO_LOGS_DEFAULT_LEVEL:INFO}"/>
   <logger name="XMLResolvingServiceImpl" level="INFO"/>
   <logger name="TRAXTemplatesServiceImpl" level="INFO"/>
   <logger name="org.hibernate" level="INFO"/>

@@ -44,6 +44,7 @@
 #EXO_LOGS_LOGBACK_CONFIG_FILE=$CATALINA_HOME/conf/logback.xml
 #EXO_LOGS_DISPLAY_CONSOLE=true
 #EXO_LOGS_CONSOLE_COLORIZED=true
+#EXO_LOGS_DEFAULT_LEVEL=DEBUG
 
 # -----------------------------------------------------------------------------
 # Default JVM configuration
