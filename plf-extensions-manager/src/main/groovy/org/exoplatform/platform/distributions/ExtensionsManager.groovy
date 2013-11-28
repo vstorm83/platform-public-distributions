@@ -60,9 +60,9 @@ ${scriptName} --uninstall <extension>
     header: "Options :",
     footer: """
 
-[*] Plugin name could be:
+[*] <extension> could be:
 - an url pointing to the extension artifact
-- the name of the plugin (local extension or download from github exo-addons)
+- the name of the extension (local extension or download from github exo-addons)
 
 Use the extension "all" to install or uninstall all local available extensions
 
@@ -234,7 +234,7 @@ def installExtension(String extensionName, List extensionRepositories) {
 
       println "Done."
 
-      // we found the plugin, stop searching in repositories
+      // we found the extension, stop searching in repositories
       return true
     } else {
       println "    -> not found"
