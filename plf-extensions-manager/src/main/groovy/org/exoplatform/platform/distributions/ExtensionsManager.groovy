@@ -1,5 +1,7 @@
 package org.exoplatform.platform.distributions
 
+import static org.fusesource.jansi.Ansi.ansi
+
 /**
  * Copyright (C) 2003-2013 eXo Platform SAS.
  *
@@ -19,280 +21,89 @@ package org.exoplatform.platform.distributions
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-import groovy.io.FileType
-import groovy.util.slurpersupport.GPathResult
-import groovy.xml.StreamingMarkupBuilder
-import groovy.xml.XmlUtil
-
 /**
- * Command line utility to manage Platform extensions in a standalone Apache Tomcat based distribution.
+ * Command line utility to manage Platform extensions.
  */
 
-println """
- # ===============================
- # eXo Platform Extensions Manager
- # ===============================
-"""
 
-ant = new AntBuilder()
 
-scriptBaseName = "extension"
-// Computes the script extension from the OS
-scriptName = "${scriptBaseName}.sh"
-if (System.properties['os.name'].toLowerCase().contains('windows')) {
-  scriptName = "${scriptBaseName}.bat"
-}
+try {
 
-def cli = new CliBuilder(
-    posix: false,
-    stopAtNonOption: true,
-    usage: """
-${scriptName} --list
-${scriptName} --install <extension>
-${scriptName} --uninstall <extension>
-""",
-    header: "Options :",
-    footer: """
-
-Use the extension "all" to install or uninstall all available extensions
-
-""")
-
-// Create the list of options.
-cli.with {
-  h longOpt: 'help', 'Show usage information'
-  l longOpt: 'list', 'List all available extensions'
-  i longOpt: 'install', args: 1, argName: 'extension', 'Install an extension'
-  u longOpt: 'uninstall', args: 1, argName: 'extension', 'Uninstall an extension'
-}
-
-options = cli.parse(args)
-
-// Erroneous command line
-if (!options) {
-  System.exit 1
-}
-
-// Show usage text when -h or --help option is used.
-if (args.length == 0 || options.h) {
-  cli.usage()
-  System.exit 0
-}
-
-// Unknown parameter(s)
-// And validate parameters constraints (only one)
-if (options.arguments() || [options.l, options.i, options.u].findAll { it }.size() != 1) {
-  println "error: Invalid command line parameter(s)."
-  cli.usage()
-  System.exit 1
-}
-
-if (!System.getProperty("product.home")) {
-  println 'error: Erroneous setup, system property product.home not defined.'
-  System.exit 1
-}
-
-productHome = new File(System.getProperty("product.home"))
-
-if (!productHome.isDirectory()) {
-  println "error: Erroneous setup, product home directory (${productHome}) is invalid."
-  System.exit 1
-}
-
-extensionsDirectory = new File(productHome, "extensions")
-
-if (!extensionsDirectory.isDirectory()) {
-  println "error: Erroneous setup, extensions directory (${extensionsDirectory}) is invalid."
-  System.exit 1
-}
-
-if (!System.getProperty("platform.libraries.path")) {
-  println 'error: Erroneous setup, system property platform.libraries.path not defined.'
-  System.exit 1
-}
-
-librariesDir = new File(productHome, System.getProperty("platform.libraries.path"))
-
-if (!librariesDir.isDirectory()) {
-  println "error: Erroneous setup, platform libraries directory (${librariesDir}) is invalid."
-  System.exit 1
-}
-
-if (!System.getProperty("platform.webapps.path")) {
-  println 'error: Erroneous setup, system property platform.webapps.path not defined.'
-  System.exit 1
-}
-
-webappsDir = new File(productHome, System.getProperty("platform.webapps.path"))
-
-if (!webappsDir.isDirectory()) {
-  println "error: Erroneous setup, platform web applications directory (${webappsDir}) is invalid."
-  System.exit 1
-}
-
-def listExtensions() {
-  println "Available extensions:"
-  extensionsDirectory.eachDir() { dir -> println "  ${dir.name}" }
-  println """
-To install an extension use:
-  ${scriptName} --install <extension>
-
-To install all avalaible extensions use:
-  ${scriptName} --install all
-"""
-}
-
-def String serializeXml(GPathResult xml) {
-  XmlUtil.serialize(new StreamingMarkupBuilder().bind {
-    mkp.yield xml
-  })
-}
-
-def processFileInplace(file, Closure processText) {
-  def text = file.text
-  file.write(processText(text))
-}
-
-def installExtension(String extensionName) {
-  def extensionDirectory = new File(extensionsDirectory, extensionName);
-  def extensionLibDirectory = new File(extensionDirectory, "lib");
-  def extensionWebappDirectory = new File(extensionDirectory, "webapps");
-  if (!extensionDirectory.isDirectory()) {
-    println "error: Extension \"${extensionName}\" doesn't exist."
-    listExtensions()
+// Initialize logging system
+  Logging.initialize()
+// And display header
+  Logging.displayHeader()
+// Parse command line parameters and fill settings with user inputs
+  if (!CLI.initialize(args)) {
+    Logging.dispose()
     System.exit 1
+  } else if (Settings.Action == Settings.Action.HELP) {
+    Logging.dispose()
+    System.exit 0
   }
-  println "Installing ${extensionName} extension ..."
-  if (extensionLibDirectory.isDirectory()) {
-    ant.copy(todir: "${librariesDir}",
-        preservelastmodified: true,
-        verbose: true) {
-      fileset(dir: "${extensionLibDirectory}") {
-        include(name: "*.jar")
-      }
-    }
+// Validate execution settings
+  Settings.instance.validate()
+
+  def List<Extension> extensions = new ArrayList<Extension>()
+  def catalog
+  Logging.logWithStatus("Reading local add-ons list...") {
+    catalog = Settings.instance.localExtensionsCatalog
   }
-  if (extensionWebappDirectory.isDirectory()) {
-    ant.copy(todir: "${webappsDir}",
-        preservelastmodified: true,
-        verbose: true) {
-      fileset(dir: "${extensionWebappDirectory}") {
-        include(name: "*.war")
+  Logging.logWithStatus("Loading add-ons...") {
+    extensions.addAll(Extension.parseJSONExtensionsList(catalog))
+  }
+  Logging.logWithStatus("Downloading central add-ons list...") {
+    catalog = Settings.instance.centralCatalog
+  }
+  Logging.logWithStatus("Loading add-ons...") {
+    extensions.addAll(Extension.parseJSONExtensionsList(catalog))
+  }
+
+  switch (Settings.instance.action) {
+    case Settings.Action.LIST:
+      println ansi().render("\n@|bold Available add-ons:|@\n")
+      extensions.findAll { it.isStable() || Settings.instance.snapshots }.groupBy { it.id }.each {
+        Extension anExtension = it.value.first()
+        printf(ansi().render("+ @|bold,yellow %-${extensions.id*.size().max()}s|@ : @|bold %s|@, %s\n").toString(), anExtension.id, anExtension.name, anExtension.description)
+        printf(ansi().render("     Available Version(s) : @|bold,yellow %-${extensions.version*.size().max()}s|@ \n\n").toString(), ansi().render(it.value.collect { "@|yellow ${it.version}|@" }.join(', ')))
       }
-    }
-    // Update application.xml if it exists
-    def applicationDescriptor = new File(webappsDir, "META-INF/application.xml")
-    if (applicationDescriptor.exists()) {
-      processFileInplace(applicationDescriptor) { text ->
-        application = new XmlSlurper(false, false).parseText(text)
-        extensionWebappDirectory.eachFileRecurse(FileType.FILES) { file ->
-          def webArchive = file.name
-          def webContext = file.name.substring(0, file.name.length() - 4)
-          print "Adding/Updating context declaration /${webContext} for ${webArchive} in application.xml ... "
-          application.depthFirst().findAll { (it.name() == 'module') && (it.'web'.'web-uri'.text() == webArchive) }.each { node ->
-            // remove existing node
-            node.replaceNode {}
-          }
-          application."initialize-in-order" + {
-            module {
-              web {
-                'web-uri'(webArchive)
-                'context-root'(webContext)
-              }
-            }
-          }
-          println "OK"
+      println ansi().render("""
+  To have more details about an add-on:
+    ${CLI.getScriptName()} --info <@|yellow add-on|@>
+  To install an add-on:
+    ${CLI.getScriptName()} --install <@|yellow add-on|@>
+  """).toString()
+      break
+    case Settings.Action.INSTALL:
+      def extensionList = extensions.findAll { (it.isStable() || Settings.instance.snapshots) && Settings.instance.extensionId.equals(it.id) }
+      if (extensionList.size() == 0) {
+        Logging.logWithStatusKO("No add-on with identifier ${Settings.instance.extensionId} found")
+        break
+      }
+      def extension = extensionList.first();
+      extension.install()
+      break
+    case Settings.Action.UNINSTALL:
+      def statusFile = new File(Settings.instance.extensionsDirectory, "${Settings.instance.extensionId}.status")
+      if (statusFile.exists()) {
+        def extension
+        Logging.logWithStatus("Loading extension details...") {
+          extension = Extension.parseJSONExtension(statusFile.text);
         }
-        serializeXml(application)
+        extension.uninstall()
+      } else {
+        Logging.logWithStatusKO("Add-on not installed. Exiting.")
       }
-    }
+      break
+    default:
+      Logging.displayMsgError("Unsupported operation.")
+      Logging.dispose()
+      System.exit 1
   }
-  println "Done."
+} catch (Exception e) {
+  System.exit 1
+} finally {
+  Logging.dispose()
 }
 
-def uninstallExtension(String extensionName) {
-  def extensionDirectory = new File(extensionsDirectory, extensionName);
-  def extensionLibDirectory = new File(extensionDirectory, "lib");
-  def extensionWebappDirectory = new File(extensionDirectory, "webapps");
-  if (!extensionDirectory.isDirectory()) {
-    println "error: Extension \"${extensionName}\" doesn't exist."
-    listExtensions()
-    System.exit 1
-  }
-  println "Uninstalling ${extensionName} extension ..."
-  if (extensionLibDirectory.isDirectory()) {
-    extensionLibDirectory.eachFileRecurse(FileType.FILES) { file ->
-      ant.delete(
-          file: new File(librariesDir, file.name))
-    }
-  }
-  if (extensionWebappDirectory.isDirectory()) {
-    // Update application.xml if it exists
-    def applicationDescriptor = new File(webappsDir, "META-INF/application.xml")
-    extensionWebappDirectory.eachFileRecurse(FileType.FILES) { file ->
-      ant.delete(
-          file: new File(webappsDir, file.name))
-      if (applicationDescriptor.exists()) {
-        processFileInplace(applicationDescriptor) { text ->
-          application = new XmlSlurper(false, false).parseText(text)
-          def webArchive = file.name
-          def webContext = file.name.substring(0, file.name.length() - 4)
-          application.depthFirst().findAll { (it.name() == 'module') && (it.'web'.'web-uri'.text() == webArchive) }.each { node ->
-            print "Removing context declaration /${webContext} for ${webArchive} in application.xml ... "
-            // remove existing node
-            node.replaceNode {}
-            println "OK"
-          }
-          serializeXml(application)
-        }
-      }
-    }
-  }
-  println "Done."
-}
-
-// ListExtensions
-if (options.l) {
-  listExtensions()
-  System.exit 0
-}
-
-// InstallExtensions
-if (options.i) {
-  if ("all".equalsIgnoreCase(options.i)) {
-    extensionsDirectory.eachDir() { dir -> installExtension dir.name }
-    println """
- # ===============================
- # All extensions installed.
- # ===============================
-"""
-  } else {
-    installExtension(options.i)
-    println """
- # ===============================
- # Extension ${options.i} installed.
- # ===============================
-"""
-  }
-  System.exit 0
-}
-
-// UninstallExtension
-if (options.u) {
-  if ("all".equalsIgnoreCase(options.u)) {
-    extensionsDirectory.eachDir() { dir -> uninstallExtension dir.name }
-    println """
- # ==============================
- # All extensions uninstalled.
- # ===============================
-"""
-  } else {
-    uninstallExtension(options.u)
-    println """
- # ===============================
- # Extension ${options.u} uninstalled.
- # ===============================
-"""
-  }
-  System.exit 0
-}
+System.exit 0

@@ -1,0 +1,18 @@
+[
+  {
+    "id": "exo-crash",
+    "version": "4.0.1-SNAPSHOT",
+    "name": "CRaSH Extension",
+    "description": "A shell to manage your platform",
+    "releaseDate": "N/A",
+    "sourceUrl": "N/A",
+    "screenshotUrl": "N/A",
+    "thumbnailUrl": "N/A",
+    "documentationUrl": "N/A",
+    "downloadUrl": "file://./plf-extension-crsh-4.1.0-SNAPSHOT.zip",
+    "vendor": "N/A",
+    "license": "LGPLv3",
+    "supportedDistributions": ["community"],
+    "supportedApplicationServers": ["tomcat"]
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "id": "exo-crash",
+    "version": "${project.version}",
+    "name": "CRaSH Extension",
+    "description": "A shell to manage your platform",
+    "releaseDate": "${maven.build.timestamp}",
+    "sourceUrl": "https://github.com/exoplatform/platform-public-distributions",
+    "screenshotUrl": "N/A",
+    "thumbnailUrl": "N/A",
+    "documentationUrl": "N/A",
+    "downloadUrl": "file://./${project.artifactId}-${project.version}.zip",
+    "vendor": "${project.organization.name}",
+    "license": "GNU Lesser General Public License, Version 3.0",
+    "supportedDistributions": ["community"],
+    "supportedApplicationServers": ["tomcat"]
+  }
+]

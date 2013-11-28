@@ -29,6 +29,10 @@
   <artifactId>plf-extension-crsh</artifactId>
   <packaging>pom</packaging>
   <name>eXo Platform Public Distributions - Extension - CRaSH</name>
+  <properties>
+  	<!-- workaround for http://jira.codehaus.org/browse/MASSEMBLY-603 -->
+  	<maven.build.timestamp>${maven.build.timestamp}</maven.build.timestamp>
+  </properties>
   <dependencies>
     <!-- CRaSH webapp for GateIn -->
     <dependency>

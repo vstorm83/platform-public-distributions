@@ -77,7 +77,6 @@
         <include>*:*-extension-*:zip</include>
       </includes>
       <scope>provided</scope>
-      <unpack>true</unpack>
       <useProjectArtifact>false</useProjectArtifact>
     </dependencySet>
   </dependencySets>
